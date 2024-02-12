@@ -9,10 +9,11 @@ import {
   OneToMany,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { YoutubeActivity } from 'src/youtube-activity/youtube-activity.entity';
 // import { YoutubeActivity } from 'src/youtube-activity/youtube-activity.entity';
 
 @Entity()
-@Unique(['email', 'username'])
+@Unique(['email'])
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -20,10 +21,10 @@ export class User extends BaseEntity {
   @Column()
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   username: string;
 
-  @Column()
+  @Column({ nullable: true })
   password: string;
 
   @Column({ nullable: true })
@@ -42,6 +43,9 @@ export class User extends BaseEntity {
   isActive: boolean;
 
   @Column({ nullable: true })
+  refreshToken: string;
+
+  @Column({ nullable: true })
   googleAccessToken: string;
 
   @Column({ nullable: true })
@@ -53,8 +57,8 @@ export class User extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // @OneToMany(() => YoutubeActivity, (youtubeActivity) => youtubeActivity.user)
-  // youtubeActivities: YoutubeActivity[];
+  @OneToMany(() => YoutubeActivity, (youtubeActivity) => youtubeActivity.user)
+  youtubeActivities: YoutubeActivity[];
 
   async validatePassword(password: string): Promise<boolean> {
     return await bcrypt.compare(password, this.password);

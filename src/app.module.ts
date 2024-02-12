@@ -1,11 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import config from './config/config';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { User } from './user/user.entity';
+import { YoutubeApiModule } from './youtube-api/youtube-api.module';
+import { AuthModule } from './auth/auth.module';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { JwtStrategy } from './auth/jwt.strategy';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { RuntimeExceptionFilter } from './exception/runtime.exception.filter';
+import { YoutubeActivityModule } from './youtube-activity/youtube-activity.module';
 
 @Module({
   imports: [
@@ -31,9 +37,22 @@ import { User } from './user/user.entity';
         };
       },
     }),
+    AuthModule,
     UserModule,
+    YoutubeApiModule,
+    YoutubeActivityModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    JwtStrategy,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: RuntimeExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

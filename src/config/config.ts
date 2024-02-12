@@ -29,7 +29,7 @@ export default (): Config => ({
   },
   auth: {
     secret: process.env.AUTH_SECRET || 'secret',
-    expiresIn: process.env.AUTH_EXPIRES_IN || '36000',
+    expiresIn: process.env.AUTH_EXPIRES_IN || '15m',
   },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || 'test_client',
