@@ -121,15 +121,6 @@ export class UserService {
     return await this.userRepository.save(user);
   }
 
-  async findUserByRefreshToken(tokenValue: string): Promise<User | undefined> {
-    // Example for PostgreSQL using QueryBuilder
-    // Adjust the query according to your database structure and SQL dialect
-    return this.userRepository
-      .createQueryBuilder('user')
-      .where("user.refreshToken ->> 'value' = :tokenValue", { tokenValue })
-      .getOne();
-  }
-
   // private async updateYoutubeActivities(user: User): Promise<User> {
   //   const likedVideos = await this.youtubeApiService.getAllLikedVideos(
   //     user.googleAccessToken,
