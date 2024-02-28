@@ -1,15 +1,33 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as azure from '@pulumi/azure-native';
 import * as k8s from '@pulumi/kubernetes';
+import * as docker from '@pulumi/docker';
 
 const config = new pulumi.Config();
 
 const location = config.get('location') || 'germanywestcentral';
 
 const sshPublicKey = config.require('sshPublicKey');
+const dockerhubPassword = config.requireSecret('dockerhubPassword');
 
 const resourceGroup = new azure.resources.ResourceGroup('myResourceGroup', {
   location: location,
+});
+
+const imageName = 'wmb';
+
+// Build and push the Docker image
+const myImage = new docker.Image(imageName, {
+  imageName: pulumi.interpolate`nyunoshev/${imageName}:latest`,
+  build: {
+    context: '../',
+    platform: 'linux/amd64',
+  },
+  registry: {
+    server: 'docker.io',
+    username: 'nyunoshev',
+    password: dockerhubPassword,
+  },
 });
 
 const cluster = new azure.containerservice.ManagedCluster('myCluster', {
@@ -40,7 +58,7 @@ const cluster = new azure.containerservice.ManagedCluster('myCluster', {
 });
 
 // Use the AKS cluster's kubeconfig to interact with the cluster
-const kubeconfig = pulumi
+export const kubeconfig = pulumi
   .all([cluster.name, resourceGroup.name])
   .apply(([clusterName, rgName]) =>
     azure.containerservice
@@ -79,6 +97,13 @@ const postgresDeployment = new k8s.apps.v1.Deployment(
                 { name: 'POSTGRES_PASSWORD', value: 'password' },
               ],
               ports: [{ containerPort: 5432 }],
+              readinessProbe: {
+                exec: {
+                  command: ['pg_isready', '-U', 'postgres'],
+                },
+                initialDelaySeconds: 5,
+                periodSeconds: 5,
+              },
             },
           ],
         },
@@ -99,10 +124,21 @@ const appDeployment = new k8s.apps.v1.Deployment(
       template: {
         metadata: { labels: { app: 'nodejs-app' } },
         spec: {
+          initContainers: [
+            {
+              name: 'wait-for-postgres',
+              image: 'busybox',
+              command: [
+                'sh',
+                '-c',
+                'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;',
+              ],
+            },
+          ],
           containers: [
             {
               name: 'nodejs-app',
-              image: 'nyunoshev/wmb',
+              image: 'nyunoshev/wmb:latest',
               env: [
                 { name: 'DB_HOST', value: 'postgres' },
                 { name: 'DB_PORT', value: '5432' },
@@ -110,6 +146,18 @@ const appDeployment = new k8s.apps.v1.Deployment(
                 { name: 'DB_PASSWORD', value: 'password' },
                 { name: 'DB_DATABASE', value: 'mydatabase' },
                 { name: 'ENV', value: 'dev' },
+                {
+                  name: 'GOOGLE_CLIENT_ID',
+                  value: config.require('googleClientId'),
+                },
+                {
+                  name: 'GOOGLE_CLIENT_SECRET',
+                  value: config.require('googleClientSecret'),
+                },
+                {
+                  name: 'GOOGLE_REDIRECT_URI',
+                  value: 'https://developers.google.com/oauthplayground',
+                },
               ],
               ports: [{ containerPort: 3000 }],
             },
@@ -119,6 +167,28 @@ const appDeployment = new k8s.apps.v1.Deployment(
     },
   },
   { provider, dependsOn: [postgresDeployment] },
+);
+
+const postgresService = new k8s.core.v1.Service(
+  'postgres-service',
+  {
+    metadata: {
+      name: 'postgres',
+    },
+    spec: {
+      type: 'ClusterIP', // Default type, suitable for internal communication
+      ports: [
+        {
+          port: 5432, // PostgreSQL default port
+          targetPort: 5432, // Container port
+        },
+      ],
+      selector: {
+        app: 'postgres', // Should match the labels of your PostgreSQL pods
+      },
+    },
+  },
+  { provider },
 );
 
 const appService = new k8s.core.v1.Service(

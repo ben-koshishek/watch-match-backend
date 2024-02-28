@@ -1,15 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import { TokenService } from './token.service';
-
-export type AuthTokens = {
-  accessToken: string;
-  refreshToken: string;
-};
+import { UserResponseDto } from 'src/user/dto/user.response.dto';
+import { AuthTokens } from './dto/authTokens.dto';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +13,6 @@ export class AuthService {
 
   constructor(
     private readonly userService: UserService,
-    private readonly jwtService: JwtService,
     private readonly tokenService: TokenService,
   ) {
     this.oauth2Client = new OAuth2Client(
@@ -53,7 +48,7 @@ export class AuthService {
     return await this.userService.updateUser(existingUser.id, user);
   }
 
-  async verifyGoogleToken(tokenId: string) {
+  async verifyGoogleToken(tokenId: string): Promise<AuthTokens> {
     try {
       const { tokens } = await this.oauth2Client.getToken(tokenId);
 
@@ -79,11 +74,11 @@ export class AuthService {
         sub: user.id,
       });
     } catch (error) {
-      if (error.response?.data?.error === 'invalid_grant') {
-        throw new UnauthorizedException(
-          'Token has already been used or is expired',
-        );
-      }
+      // if (error?.response?.data?.error === 'invalid_grant') {
+      //   throw new UnauthorizedException(
+      //     'Token has already been used or is expired',
+      //   );
+      // }
       throw error;
     }
   }
@@ -97,7 +92,9 @@ export class AuthService {
     });
   }
 
-  async getMe(userId: number) {
-    return await this.userService.getProfileData(userId);
+  async getMe(userId: number): Promise<UserResponseDto> {
+    return UserResponseDto.fromUser(
+      await this.userService.getProfileData(userId),
+    );
   }
 }

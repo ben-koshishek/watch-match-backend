@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { randomBytes } from 'crypto';
 import { UserService } from 'src/user/user.service';
-import { AuthTokens } from './auth.service';
 import { User } from 'src/user/user.entity';
 import { AuthException } from 'src/exception/authentication.exception';
 import { JwtPayload } from './jwt.strategy';
+import { AuthTokens } from './dto/authTokens.dto';
 
 export type RefreshTokenPayload = {
   value: string;

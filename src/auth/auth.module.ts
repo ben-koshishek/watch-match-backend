@@ -8,11 +8,11 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { UserService } from 'src/user/user.service';
 import { ConfigService } from '@nestjs/config';
-import { AuthConfig } from 'src/config/config';
 import { YoutubeApiModule } from 'src/youtube-api/youtube-api.module';
 import { YoutubeActivityModule } from 'src/youtube-activity/youtube-activity.module';
 import { OAuth2Client } from 'google-auth-library';
 import { TokenService } from './token.service';
+import { AuthConfig } from 'src/config/types';
 // import { YoutubeActivity } from 'src/youtube-activity/youtube-activity.entity';
 
 @Module({

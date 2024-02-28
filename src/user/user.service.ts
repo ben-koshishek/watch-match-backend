@@ -66,7 +66,7 @@ export class UserService {
 
       return await this.userRepository.save(newUser);
     } catch (error) {
-      this.logger.error(`Failed to create a user for ${email}`, error.stack);
+      this.logger.error(`Failed to create a user for ${email}`, error);
       throw new ConflictException('There was a problem creating the user');
     }
   }

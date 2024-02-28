@@ -1,5 +1,10 @@
 config:
   azure-native:location: westeurope
+  watch-match-backend:dockerhubPassword:
+    secure: AAABAKWFoBJrsFYLXWZPA+vw/pNXLAD/9MdnjXIKxrnpi8jpzs7AfLylXyecXttm
+  watch-match-backend:googleClientId: 598891428266-1e67va9nv5rek11ost9as838stue4ce1.apps.googleusercontent.com
+  watch-match-backend:googleClientSecret:
+    secure: AAABAMHn6SyQQgv1vstPPCA1pWBgef+pwGRGeS0IW2DYmqakb8uar0afhFJeLTDlC2CV0diEolFhEg8WOrNBDUP3XQ==
   watch-match-backend:spPassword:
     secure: AAABANOyNQgv/jdimvU9LUdGlh0UdChX1Y/llYfwI8aalFWpZIWsxw==
   watch-match-backend:sshPublicKey:
